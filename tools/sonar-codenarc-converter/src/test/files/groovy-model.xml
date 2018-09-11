@@ -3635,7 +3635,24 @@
                     <txt>mn</txt>
                 </prop>
             </chc>
-
+            <chc>
+                <rule-repo>grvy</rule-repo>
+                <rule-key>org.codenarc.rule.grails.GrailsDomainWithServiceReferenceRule</rule-key>
+                <prop>
+                    <key>remediationFunction</key>
+                    <txt>linear</txt>
+                </prop>
+                <prop>
+                    <key>remediationFactor</key>
+                    <val>20.0</val>
+                    <txt>mn</txt>
+                </prop>
+                <prop>
+                    <key>offset</key>
+                    <val>0.0</val>
+                    <txt>mn</txt>
+                </prop>
+            </chc>
             <chc>
                 <rule-repo>grvy</rule-repo>
                 <rule-key>org.codenarc.rule.grails.GrailsDuplicateConstraintRule</rule-key>
@@ -3656,98 +3673,6 @@
             </chc>
             <chc>
                 <rule-repo>grvy</rule-repo>
-                <rule-key>org.codenarc.rule.grails.GrailsDomainHasEqualsRule</rule-key>
-                <prop>
-                    <key>remediationFunction</key>
-                    <txt>linear</txt>
-                </prop>
-                <prop>
-                    <key>remediationFactor</key>
-                    <val>20.0</val>
-                    <txt>mn</txt>
-                </prop>
-                <prop>
-                    <key>offset</key>
-                    <val>0.0</val>
-                    <txt>mn</txt>
-                </prop>
-            </chc>
-            <chc>
-                <rule-repo>grvy</rule-repo>
-                <rule-key>org.codenarc.rule.grails.GrailsDomainHasToStringRule</rule-key>
-                <prop>
-                    <key>remediationFunction</key>
-                    <txt>linear</txt>
-                </prop>
-                <prop>
-                    <key>remediationFactor</key>
-                    <val>20.0</val>
-                    <txt>mn</txt>
-                </prop>
-                <prop>
-                    <key>offset</key>
-                    <val>0.0</val>
-                    <txt>mn</txt>
-                </prop>
-            </chc>
-            <chc>
-                <rule-repo>grvy</rule-repo>
-                <rule-key>org.codenarc.rule.grails.GrailsDomainReservedSqlKeywordNameRule</rule-key>
-                <prop>
-                    <key>remediationFunction</key>
-                    <txt>linear</txt>
-                </prop>
-                <prop>
-                    <key>remediationFactor</key>
-                    <val>20.0</val>
-                    <txt>mn</txt>
-                </prop>
-                <prop>
-                    <key>offset</key>
-                    <val>0.0</val>
-                    <txt>mn</txt>
-                </prop>
-            </chc>
-            <chc>
-                <rule-repo>grvy</rule-repo>
-                <rule-key>org.codenarc.rule.grails.GrailsDomainStringPropertyMaxSizeRule</rule-key>
-                <prop>
-                    <key>remediationFunction</key>
-                    <txt>linear</txt>
-                </prop>
-                <prop>
-                    <key>remediationFactor</key>
-                    <val>20.0</val>
-                    <txt>mn</txt>
-                </prop>
-                <prop>
-                    <key>offset</key>
-                    <val>0.0</val>
-                    <txt>mn</txt>
-                </prop>
-            </chc>
-
-            <chc>
-                <rule-repo>grvy</rule-repo>
-                <rule-key>org.codenarc.rule.grails.GrailsDomainWithServiceReferenceRule</rule-key>
-                <prop>
-                    <key>remediationFunction</key>
-                    <txt>linear</txt>
-                </prop>
-                <prop>
-                    <key>remediationFactor</key>
-                    <val>20.0</val>
-                    <txt>mn</txt>
-                </prop>
-                <prop>
-                    <key>offset</key>
-                    <val>0.0</val>
-                    <txt>mn</txt>
-                </prop>
-            </chc>
-
-            <chc>
-                <rule-repo>grvy</rule-repo>
                 <rule-key>org.codenarc.rule.grails.GrailsDuplicateMappingRule</rule-key>
                 <prop>
                     <key>remediationFunction</key>
@@ -3766,43 +3691,25 @@
             </chc>
             <chc>
                 <rule-repo>grvy</rule-repo>
-                <rule-key>org.codenarc.rule.grails.GrailsMassAssignmentRule</rule-key>
-                <prop>
-                    <key>remediationFunction</key>
-                    <txt>linear</txt>
-                </prop>
-                <prop>
-                    <key>remediationFactor</key>
-                    <val>20.0</val>
-                    <txt>mn</txt>
-                </prop>
-                <prop>
-                    <key>offset</key>
-                    <val>0.0</val>
-                    <txt>mn</txt>
-                </prop>
-            </chc>
-            <chc>
-                <rule-repo>grvy</rule-repo>
-                <rule-key>org.codenarc.rule.grails.GrailsPublicControllerMethodRule</rule-key>
-                <prop>
-                    <key>remediationFunction</key>
-                    <txt>linear</txt>
-                </prop>
-                <prop>
-                    <key>remediationFactor</key>
-                    <val>20.0</val>
-                    <txt>mn</txt>
-                </prop>
-                <prop>
-                    <key>offset</key>
-                    <val>0.0</val>
-                    <txt>mn</txt>
-                </prop>
-            </chc>
-            <chc>
-                <rule-repo>grvy</rule-repo>
                 <rule-key>org.codenarc.rule.grails.GrailsServletContextReferenceRule</rule-key>
+                <prop>
+                    <key>remediationFunction</key>
+                    <txt>linear</txt>
+                </prop>
+                <prop>
+                    <key>remediationFactor</key>
+                    <val>20.0</val>
+                    <txt>mn</txt>
+                </prop>
+                <prop>
+                    <key>offset</key>
+                    <val>0.0</val>
+                    <txt>mn</txt>
+                </prop>
+            </chc>
+            <chc>
+                <rule-repo>grvy</rule-repo>
+                <rule-key>org.codenarc.rule.grails.GrailsSessionReferenceRule</rule-key>
                 <prop>
                     <key>remediationFunction</key>
                     <txt>linear</txt>
