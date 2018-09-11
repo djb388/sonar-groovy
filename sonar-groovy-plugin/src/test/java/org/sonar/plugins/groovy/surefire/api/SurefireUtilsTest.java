@@ -36,41 +36,41 @@ import static org.mockito.Mockito.when;
 
 public class SurefireUtilsTest {
 
-  private FileSystem fs;
-  private PathResolver pathResolver;
+    private FileSystem fs;
+    private PathResolver pathResolver;
 
-  @Before
-  public void setup() {
-    fs = new DefaultFileSystem(new File("src/test/resources/org/sonar/plugins/groovy/surefire/api/SurefireUtilsTest/shouldGetReportsFromProperty"));
-    pathResolver = new PathResolver();
-  }
+    @Before
+    public void setup() {
+        fs = new DefaultFileSystem(new File("src/test/resources/org/sonar/plugins/groovy/surefire/api/SurefireUtilsTest/shouldGetReportsFromProperty"));
+        pathResolver = new PathResolver();
+    }
 
-  @Test
-  public void should_get_reports_from_property() {
-    Settings settings = mock(Settings.class);
-    when(settings.getString("sonar.junit.reportsPath")).thenReturn("target/surefire");
-    assertThat(SurefireUtils.getReportsDirectory(settings, fs, pathResolver).exists()).isTrue();
-    assertThat(SurefireUtils.getReportsDirectory(settings, fs, pathResolver).isDirectory()).isTrue();
-  }
+    @Test
+    public void should_get_reports_from_property() {
+        Settings settings = mock(Settings.class);
+        when(settings.getString("sonar.junit.reportsPath")).thenReturn("target/surefire");
+        assertThat(SurefireUtils.getReportsDirectory(settings, fs, pathResolver).exists()).isTrue();
+        assertThat(SurefireUtils.getReportsDirectory(settings, fs, pathResolver).isDirectory()).isTrue();
+    }
 
-  @Test
-  public void return_default_value_if_property_unset() throws Exception {
-    File directory = SurefireUtils.getReportsDirectory(mock(Settings.class), fs, pathResolver);
-    assertThat(directory.getCanonicalPath()).endsWith("target" + File.separator + "surefire-reports");
-    assertThat(directory.exists()).isFalse();
-    assertThat(directory.isDirectory()).isFalse();
-  }
+    @Test
+    public void return_default_value_if_property_unset() throws Exception {
+        File directory = SurefireUtils.getReportsDirectory(mock(Settings.class), fs, pathResolver);
+        assertThat(directory.getCanonicalPath()).endsWith("target" + File.separator + "surefire-reports");
+        assertThat(directory.exists()).isFalse();
+        assertThat(directory.isDirectory()).isFalse();
+    }
 
-  @Test
-  public void return_default_value_if_can_not_read_file() throws Exception {
-    Settings settings = mock(Settings.class);
-    when(settings.getString("sonar.junit.reportsPath")).thenReturn("target/surefire");
-    PathResolver pathResolver = mock(PathResolver.class);
-    when(pathResolver.relativeFile(any(File.class), anyString())).thenThrow(new IllegalStateException());
-    File directory = SurefireUtils.getReportsDirectory(settings, fs, pathResolver);
-    assertThat(directory.getCanonicalPath()).endsWith("target" + File.separator + "surefire-reports");
-    assertThat(directory.exists()).isFalse();
-    assertThat(directory.isDirectory()).isFalse();
-  }
+    @Test
+    public void return_default_value_if_can_not_read_file() throws Exception {
+        Settings settings = mock(Settings.class);
+        when(settings.getString("sonar.junit.reportsPath")).thenReturn("target/surefire");
+        PathResolver pathResolver = mock(PathResolver.class);
+        when(pathResolver.relativeFile(any(File.class), anyString())).thenThrow(new IllegalStateException());
+        File directory = SurefireUtils.getReportsDirectory(settings, fs, pathResolver);
+        assertThat(directory.getCanonicalPath()).endsWith("target" + File.separator + "surefire-reports");
+        assertThat(directory.exists()).isFalse();
+        assertThat(directory.isDirectory()).isFalse();
+    }
 
 }

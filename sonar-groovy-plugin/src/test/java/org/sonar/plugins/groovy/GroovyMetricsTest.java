@@ -24,8 +24,8 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GroovyMetricsTest {
-  @Test
-  public void test_metrics() {
-    assertThat(new GroovyMetrics().getMetrics()).hasSize(4);
-  }
+    @Test
+    public void test_metrics() {
+        assertThat(new GroovyMetrics().getMetrics()).hasSize(4);
+    }
 }

@@ -19,7 +19,7 @@
  */
 package org.sonar.plugins.groovy.jacoco;
 
-import org.apache.commons.lang.BooleanUtils;
+import org.apache.commons.lang3.BooleanUtils;
 import org.jacoco.core.data.ExecutionDataStore;
 import org.jacoco.core.data.ExecutionDataWriter;
 import org.jacoco.core.data.IExecutionDataVisitor;

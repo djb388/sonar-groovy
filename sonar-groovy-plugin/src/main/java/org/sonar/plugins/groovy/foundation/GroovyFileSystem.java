@@ -19,64 +19,65 @@
  */
 package org.sonar.plugins.groovy.foundation;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import javax.annotation.CheckForNull;
-import org.sonar.api.batch.BatchSide;
+import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.batch.fs.FilePredicate;
 import org.sonar.api.batch.fs.FilePredicates;
 import org.sonar.api.batch.fs.FileSystem;
 import org.sonar.api.batch.fs.InputFile;
 import org.sonar.api.batch.fs.InputFile.Type;
 
-@BatchSide
+import javax.annotation.CheckForNull;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+
+@ScannerSide
 public class GroovyFileSystem {
 
-  private final FileSystem fileSystem;
-  private final FilePredicates predicates;
-  private final FilePredicate isGroovyLanguage;
-  private final FilePredicate isMainTypeFile;
+    private final FileSystem fileSystem;
+    private final FilePredicates predicates;
+    private final FilePredicate isGroovyLanguage;
+    private final FilePredicate isMainTypeFile;
 
-  public GroovyFileSystem(FileSystem fileSystem) {
-    this.fileSystem = fileSystem;
-    this.predicates = fileSystem.predicates();
-    this.isGroovyLanguage = predicates.hasLanguage(Groovy.KEY);
-    this.isMainTypeFile = predicates.hasType(Type.MAIN);
-  }
+    public GroovyFileSystem(FileSystem fileSystem) {
+        this.fileSystem = fileSystem;
+        this.predicates = fileSystem.predicates();
+        this.isGroovyLanguage = predicates.hasLanguage(Groovy.KEY);
+        this.isMainTypeFile = predicates.hasType(Type.MAIN);
+    }
 
-  public boolean hasGroovyFiles() {
-    return fileSystem.hasFiles(isGroovyLanguage);
-  }
+    public boolean hasGroovyFiles() {
+        return fileSystem.hasFiles(isGroovyLanguage);
+    }
 
-  public List<File> sourceFiles() {
-    Iterable<File> files = fileSystem.files(predicates.and(isGroovyLanguage, isMainTypeFile));
-    List<File> list = new ArrayList<>();
-    files.iterator().forEachRemaining(list::add);
-    return list;
-  }
+    public List<File> sourceFiles() {
+        Iterable<File> files = fileSystem.files(predicates.and(isGroovyLanguage, isMainTypeFile));
+        List<File> list = new ArrayList<>();
+        files.iterator().forEachRemaining(list::add);
+        return list;
+    }
 
-  public List<InputFile> groovyInputFiles() {
-    Iterable<InputFile> inputFiles = fileSystem.inputFiles(isGroovyLanguage);
-    List<InputFile> list = new ArrayList<>();
-    inputFiles.iterator().forEachRemaining(list::add);
-    return list;
-  }
+    public List<InputFile> groovyInputFiles() {
+        Iterable<InputFile> inputFiles = fileSystem.inputFiles(isGroovyLanguage);
+        List<InputFile> list = new ArrayList<>();
+        inputFiles.iterator().forEachRemaining(list::add);
+        return list;
+    }
 
-  public List<InputFile> sourceInputFiles() {
-    Iterable<InputFile> inputFiles = fileSystem.inputFiles(predicates.and(isGroovyLanguage, isMainTypeFile));
-    List<InputFile> list = new ArrayList<>();
-    inputFiles.iterator().forEachRemaining(list::add);
-    return list;
-  }
+    public List<InputFile> sourceInputFiles() {
+        Iterable<InputFile> inputFiles = fileSystem.inputFiles(predicates.and(isGroovyLanguage, isMainTypeFile));
+        List<InputFile> list = new ArrayList<>();
+        inputFiles.iterator().forEachRemaining(list::add);
+        return list;
+    }
 
-  @CheckForNull
-  public InputFile sourceInputFileFromRelativePath(String relativePath) {
-    return fileSystem.inputFile(predicates.and(predicates.matchesPathPattern("**/" + relativePath), isGroovyLanguage, isMainTypeFile));
-  }
+    @CheckForNull
+    public InputFile sourceInputFileFromRelativePath(String relativePath) {
+        return fileSystem.inputFile(predicates.and(predicates.matchesPathPattern("**/" + relativePath), isGroovyLanguage, isMainTypeFile));
+    }
 
-  public File baseDir() {
-    return fileSystem.baseDir();
-  }
+    public File baseDir() {
+        return fileSystem.baseDir();
+    }
 
 }

@@ -19,10 +19,10 @@
  */
 package org.sonar.plugins.groovy.codenarc;
 
-import org.apache.commons.lang.CharUtils;
+import org.apache.commons.lang3.CharUtils;
+import org.assertj.core.api.Fail;
 import org.custommonkey.xmlunit.Diff;
 import org.custommonkey.xmlunit.XMLUnit;
-import org.assertj.core.api.Fail;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,8 +31,8 @@ import org.mockito.Mockito;
 import org.sonar.api.profiles.RulesProfile;
 import org.sonar.api.rules.Rule;
 import org.sonar.api.rules.RulePriority;
-import org.sonar.plugins.groovy.foundation.Groovy;
 import org.sonar.plugins.groovy.TestUtils;
+import org.sonar.plugins.groovy.foundation.Groovy;
 
 import java.io.File;
 import java.io.FileReader;

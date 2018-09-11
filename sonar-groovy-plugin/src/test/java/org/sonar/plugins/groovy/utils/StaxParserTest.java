@@ -24,19 +24,18 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 import javax.xml.stream.XMLStreamException;
-
 import java.io.File;
 
 public class StaxParserTest {
 
-  @Rule
-  public ExpectedException thrown = ExpectedException.none();
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
-  @Test
-  public void should_fail_parsing_ig_file_does_not_exist() throws Exception {
-    thrown.expect(XMLStreamException.class);
-    StaxParser parser = new StaxParser(rootCursor -> {});
-    parser.parse(new File("fake.xml"));
-  }
+    @Test
+    public void should_fail_parsing_ig_file_does_not_exist() throws Exception {
+        thrown.expect(XMLStreamException.class);
+        StaxParser parser = new StaxParser(rootCursor -> {});
+        parser.parse(new File("fake.xml"));
+    }
 
 }

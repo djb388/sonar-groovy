@@ -19,7 +19,7 @@
  */
 package org.sonar.plugins.groovy.surefire.data;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.staxmate.in.ElementFilter;
 import org.codehaus.staxmate.in.SMEvent;
 import org.codehaus.staxmate.in.SMHierarchicCursor;
@@ -28,7 +28,6 @@ import org.sonar.api.utils.ParsingUtils;
 import org.sonar.plugins.groovy.utils.StaxParser.XmlStreamHandler;
 
 import javax.xml.stream.XMLStreamException;
-
 import java.text.ParseException;
 import java.util.Locale;
 

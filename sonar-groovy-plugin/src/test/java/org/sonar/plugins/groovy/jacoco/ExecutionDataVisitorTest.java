@@ -26,24 +26,24 @@ import org.junit.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class ExecutionDataVisitorTest {
-  @Test
-  public void test() {
-    ExecutionDataVisitor visitor = new ExecutionDataVisitor();
+    @Test
+    public void test() {
+        ExecutionDataVisitor visitor = new ExecutionDataVisitor();
 
-    visitor.visitSessionInfo(new SessionInfo("foo", 1L, 1L));
-    visitor.visitClassExecution(new ExecutionData(1, "", new boolean[] {true, false, false}));
+        visitor.visitSessionInfo(new SessionInfo("foo", 1L, 1L));
+        visitor.visitClassExecution(new ExecutionData(1, "", new boolean[]{true, false, false}));
 
-    visitor.visitSessionInfo(new SessionInfo("bar", 2L, 2L));
-    visitor.visitClassExecution(new ExecutionData(1, "", new boolean[] {false, true, false}));
+        visitor.visitSessionInfo(new SessionInfo("bar", 2L, 2L));
+        visitor.visitClassExecution(new ExecutionData(1, "", new boolean[]{false, true, false}));
 
-    visitor.visitSessionInfo(new SessionInfo("foo", 3L, 3L));
-    visitor.visitClassExecution(new ExecutionData(1, "", new boolean[] {false, false, true}));
+        visitor.visitSessionInfo(new SessionInfo("foo", 3L, 3L));
+        visitor.visitClassExecution(new ExecutionData(1, "", new boolean[]{false, false, true}));
 
-    assertThat(visitor.getSessions()).hasSize(2);
-    assertThat(visitor.getSessions().get("foo").getContents()).hasSize(1);
-    assertThat(visitor.getSessions().get("foo").get(1).getProbes()).isEqualTo(new boolean[] {true, false, true});
-    assertThat(visitor.getSessions().get("bar").getContents()).hasSize(1);
-    assertThat(visitor.getSessions().get("bar").get(1).getProbes()).isEqualTo(new boolean[] {false, true, false});
-    assertThat(visitor.getMerged().get(1).getProbes()).isEqualTo(new boolean[] {true, true, true});
-  }
+        assertThat(visitor.getSessions()).hasSize(2);
+        assertThat(visitor.getSessions().get("foo").getContents()).hasSize(1);
+        assertThat(visitor.getSessions().get("foo").get(1).getProbes()).isEqualTo(new boolean[]{true, false, true});
+        assertThat(visitor.getSessions().get("bar").getContents()).hasSize(1);
+        assertThat(visitor.getSessions().get("bar").get(1).getProbes()).isEqualTo(new boolean[]{false, true, false});
+        assertThat(visitor.getMerged().get(1).getProbes()).isEqualTo(new boolean[]{true, true, true});
+    }
 }

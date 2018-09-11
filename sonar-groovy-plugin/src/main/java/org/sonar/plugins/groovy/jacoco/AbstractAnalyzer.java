@@ -19,14 +19,7 @@
  */
 package org.sonar.plugins.groovy.jacoco;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import javax.annotation.CheckForNull;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.jacoco.core.analysis.CoverageBuilder;
 import org.jacoco.core.analysis.ICounter;
 import org.jacoco.core.analysis.ILine;
@@ -39,6 +32,14 @@ import org.sonar.api.config.Settings;
 import org.sonar.api.scan.filesystem.PathResolver;
 import org.sonar.plugins.groovy.GroovyPlugin;
 import org.sonar.plugins.groovy.foundation.GroovyFileSystem;
+
+import javax.annotation.CheckForNull;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public abstract class AbstractAnalyzer {
 

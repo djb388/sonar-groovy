@@ -21,25 +21,27 @@ package org.sonar.plugins.groovy.foundation;
 
 import org.junit.Test;
 import org.sonar.api.config.Settings;
+import org.sonar.api.config.internal.MapSettings;
 import org.sonar.plugins.groovy.GroovyPlugin;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class GroovyTest {
 
-  @Test
-  public void test() {
-    Settings settings = new Settings();
-    Groovy language = new Groovy(settings);
-    assertThat(language.getKey()).isEqualTo("grvy");
-    assertThat(language.getName()).isEqualTo("Groovy");
-    assertThat(language.getFileSuffixes()).isEqualTo(new String[] {".groovy"});
+    @Test
+    public void test() {
+        Settings settings = new MapSettings();
+        Groovy language = new Groovy(settings);
 
-    settings.setProperty(GroovyPlugin.FILE_SUFFIXES_KEY, "");
-    assertThat(language.getFileSuffixes()).containsOnly(".groovy");
+        assertThat(language.getKey()).isEqualTo("grvy");
+        assertThat(language.getName()).isEqualTo("Groovy");
+        assertThat(language.getFileSuffixes()).isEqualTo(new String[]{".groovy"});
 
-    settings.setProperty(GroovyPlugin.FILE_SUFFIXES_KEY, ".groovy, .grvy");
-    assertThat(language.getFileSuffixes()).containsOnly(".groovy", ".grvy");
-  }
+        settings.setProperty(GroovyPlugin.FILE_SUFFIXES_KEY, "");
+        assertThat(language.getFileSuffixes()).containsOnly(".groovy");
+
+        settings.setProperty(GroovyPlugin.FILE_SUFFIXES_KEY, ".groovy, .grvy");
+        assertThat(language.getFileSuffixes()).containsOnly(".groovy", ".grvy");
+    }
 
 }
