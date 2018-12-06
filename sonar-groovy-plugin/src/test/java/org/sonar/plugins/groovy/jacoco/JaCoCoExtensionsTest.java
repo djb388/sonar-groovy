@@ -25,9 +25,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class JaCoCoExtensionsTest {
 
-    @Test
-    public void testExtensions() {
-        assertThat(JaCoCoExtensions.getExtensions().size()).isEqualTo(7);
-    }
+  @Test
+  public void testExtensions() {
+    assertThat(JaCoCoExtensions.getExtensions().size()).isEqualTo(7);
+  }
 
 }

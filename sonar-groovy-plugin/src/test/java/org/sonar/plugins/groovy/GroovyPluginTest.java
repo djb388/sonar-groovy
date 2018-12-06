@@ -30,17 +30,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GroovyPluginTest {
 
-    public static final Version VERSION_7_3 = Version.create(7, 3);
+  public static final Version VERSION_7_3 = Version.create(7, 3);
 
-    @Test
-    public void testExtensions() {
+  @Test
+  public void testExtensions() {
 
-        SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_7_3, SonarQubeSide.SERVER);
+    SonarRuntime runtime = SonarRuntimeImpl.forSonarQube(VERSION_7_3, SonarQubeSide.SERVER);
 
-        GroovyPlugin plugin = new GroovyPlugin();
-        Context context = new Context(runtime);
-        plugin.define(context);
-        assertThat(context.getExtensions()).hasSize(17);
-    }
+    GroovyPlugin plugin = new GroovyPlugin();
+    Context context = new Context(runtime);
+    plugin.define(context);
+    assertThat(context.getExtensions()).hasSize(17);
+  }
 
 }

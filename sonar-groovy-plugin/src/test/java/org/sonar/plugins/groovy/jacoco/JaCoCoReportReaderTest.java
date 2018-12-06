@@ -19,6 +19,9 @@
  */
 package org.sonar.plugins.groovy.jacoco;
 
+import java.io.File;
+import java.util.Arrays;
+import java.util.Collection;
 import org.apache.commons.io.FileUtils;
 import org.assertj.core.api.Fail;
 import org.jacoco.core.data.IExecutionDataVisitor;
@@ -29,71 +32,67 @@ import org.junit.rules.ExpectedException;
 import org.junit.rules.TemporaryFolder;
 import org.sonar.plugins.groovy.TestUtils;
 
-import java.io.File;
-import java.util.Arrays;
-import java.util.Collection;
-
 import static org.mockito.Mockito.mock;
 
 public class JaCoCoReportReaderTest {
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
+  @Rule
+  public ExpectedException expectedException = ExpectedException.none();
 
-    @Rule
-    public TemporaryFolder testFolder = new TemporaryFolder();
+  @Rule
+  public TemporaryFolder testFolder = new TemporaryFolder();
 
-    private File dummy = new File("DummyFile.dummy");
+  private File dummy = new File("DummyFile.dummy");
 
-    @Test
-    public void reading_unexisting_file_should_fail() {
-        expectedException.expect(IllegalArgumentException.class);
-        new JaCoCoReportReader(dummy);
+  @Test
+  public void reading_unexisting_file_should_fail() {
+    expectedException.expect(IllegalArgumentException.class);
+    new JaCoCoReportReader(dummy);
+  }
+
+  @Test
+  public void reading_file_no_tfound_should_do_nothing() {
+    new JaCoCoReportReader(null).readJacocoReport(mock(IExecutionDataVisitor.class), mock(ISessionInfoVisitor.class));
+  }
+
+  @Test
+  public void not_existing_class_files_should_not_be_analyzed_for_current() {
+    File report = TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/JaCoCo_incompatible_merge/jacoco-0.7.5.exec");
+    Collection<File> classFile = Arrays.asList(dummy);
+    new JaCoCoReportReader(report).analyzeFiles(null, classFile);
+  }
+
+  @Test
+  public void not_existing_class_files_should_not_be_analyzed_for_previous() {
+    File report = TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/JaCoCo_incompatible_merge/jacoco-0.7.4.exec");
+    Collection<File> classFile = Arrays.asList(dummy);
+    new JaCoCoReportReader(report).analyzeFiles(null, classFile);
+  }
+
+  @Test
+  public void analyzing_a_deleted_file_should_fail() throws Exception {
+    File report = testFolder.newFile("jacoco.exec");
+    FileUtils.copyFile(TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/JaCoCo_incompatible_merge/jacoco-0.7.5.exec"), report);
+    JaCoCoReportReader jacocoReportReader = new JaCoCoReportReader(report);
+    expectedException.expect(IllegalArgumentException.class);
+    if (!report.delete()) {
+      Fail.fail("report was not deleted, unable to complete test.");
     }
+    ExecutionDataVisitor edv = new ExecutionDataVisitor();
+    jacocoReportReader.readJacocoReport(edv, edv);
+  }
 
-    @Test
-    public void reading_file_no_tfound_should_do_nothing() {
-        new JaCoCoReportReader(null).readJacocoReport(mock(IExecutionDataVisitor.class), mock(ISessionInfoVisitor.class));
-    }
+  @Test
+  public void incorrect_binary_format_should_fail() throws Exception {
+    File report = TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/Hello.class.toCopy");
+    expectedException.expect(IllegalArgumentException.class);
+    new JaCoCoReportReader(report);
+  }
 
-    @Test
-    public void not_existing_class_files_should_not_be_analyzed_for_current() {
-        File report = TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/JaCoCo_incompatible_merge/jacoco-0.7.5.exec");
-        Collection<File> classFile = Arrays.asList(dummy);
-        new JaCoCoReportReader(report).analyzeFiles(null, classFile);
-    }
-
-    @Test
-    public void not_existing_class_files_should_not_be_analyzed_for_previous() {
-        File report = TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/JaCoCo_incompatible_merge/jacoco-0.7.4.exec");
-        Collection<File> classFile = Arrays.asList(dummy);
-        new JaCoCoReportReader(report).analyzeFiles(null, classFile);
-    }
-
-    @Test
-    public void analyzing_a_deleted_file_should_fail() throws Exception {
-        File report = testFolder.newFile("jacoco.exec");
-        FileUtils.copyFile(TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/JaCoCo_incompatible_merge/jacoco-0.7.5.exec"), report);
-        JaCoCoReportReader jacocoReportReader = new JaCoCoReportReader(report);
-        expectedException.expect(IllegalArgumentException.class);
-        if (!report.delete()) {
-            Fail.fail("report was not deleted, unable to complete test.");
-        }
-        ExecutionDataVisitor edv = new ExecutionDataVisitor();
-        jacocoReportReader.readJacocoReport(edv, edv);
-    }
-
-    @Test
-    public void incorrect_binary_format_should_fail() throws Exception {
-        File report = TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/Hello.class.toCopy");
-        expectedException.expect(IllegalArgumentException.class);
-        new JaCoCoReportReader(report);
-    }
-
-    @Test
-    public void unknown_exec_file_should_fail() {
-        expectedException.expect(IllegalArgumentException.class);
-        new JaCoCoReportReader(new File("unknown.exec"));
-    }
+  @Test
+  public void unknown_exec_file_should_fail() {
+    expectedException.expect(IllegalArgumentException.class);
+    new JaCoCoReportReader(new File("unknown.exec"));
+  }
 
 }

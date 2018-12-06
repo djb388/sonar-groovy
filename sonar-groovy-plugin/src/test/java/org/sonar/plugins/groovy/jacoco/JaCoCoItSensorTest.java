@@ -19,6 +19,8 @@
  */
 package org.sonar.plugins.groovy.jacoco;
 
+import java.io.File;
+import java.nio.file.Paths;
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,9 +39,6 @@ import org.sonar.plugins.groovy.TestUtils;
 import org.sonar.plugins.groovy.foundation.Groovy;
 import org.sonar.plugins.groovy.foundation.GroovyFileSystem;
 
-import java.io.File;
-import java.nio.file.Paths;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -48,91 +47,91 @@ import static org.mockito.Mockito.when;
 
 public class JaCoCoItSensorTest {
 
-    private File jacocoExecutionData;
-    private DefaultInputFile inputFile;
-    private JaCoCoConfiguration configuration;
-    private PathResolver pathResolver;
-    private JaCoCoItSensor sensor;
+  private File jacocoExecutionData;
+  private DefaultInputFile inputFile;
+  private JaCoCoConfiguration configuration;
+  private PathResolver pathResolver;
+  private JaCoCoItSensor sensor;
 
-    @Before
-    public void setUp() throws Exception {
-        File outputDir = TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/JaCoCoItSensorTests/");
-        jacocoExecutionData = new File(outputDir, "jacoco-it.exec");
+  @Before
+  public void setUp() throws Exception {
+    File outputDir = TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/JaCoCoItSensorTests/");
+    jacocoExecutionData = new File(outputDir, "jacoco-it.exec");
 
-        FileUtils.copyFile(TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/Hello.class.toCopy"),
-                new File(jacocoExecutionData.getParentFile(), "Hello.class"));
-        FileUtils.copyFile(TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/Hello$InnerClass.class.toCopy"),
-                new File(jacocoExecutionData.getParentFile(), "Hello$InnerClass.class"));
+    FileUtils.copyFile(TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/Hello.class.toCopy"),
+      new File(jacocoExecutionData.getParentFile(), "Hello.class"));
+    FileUtils.copyFile(TestUtils.getResource("/org/sonar/plugins/groovy/jacoco/Hello$InnerClass.class.toCopy"),
+      new File(jacocoExecutionData.getParentFile(), "Hello$InnerClass.class"));
 
-        Settings settings = new MapSettings();
-        settings.setProperty(GroovyPlugin.SONAR_GROOVY_BINARIES, ".");
+    Settings settings = new MapSettings();
+    settings.setProperty(GroovyPlugin.SONAR_GROOVY_BINARIES, ".");
 
-        configuration = mock(JaCoCoConfiguration.class);
-        when(configuration.shouldExecuteOnProject(true)).thenReturn(true);
-        when(configuration.shouldExecuteOnProject(false)).thenReturn(false);
-        when(configuration.getItReportPath()).thenReturn(jacocoExecutionData.getPath());
+    configuration = mock(JaCoCoConfiguration.class);
+    when(configuration.shouldExecuteOnProject(true)).thenReturn(true);
+    when(configuration.shouldExecuteOnProject(false)).thenReturn(false);
+    when(configuration.getItReportPath()).thenReturn(jacocoExecutionData.getPath());
 
-        DefaultFileSystem fileSystem = new DefaultFileSystem(jacocoExecutionData.getParentFile());
+    DefaultFileSystem fileSystem = new DefaultFileSystem(jacocoExecutionData.getParentFile());
 
-        DefaultIndexedFile abcde = new DefaultIndexedFile("", Paths.get("."), "example/Hello.groovy", Groovy.KEY);
+    DefaultIndexedFile abcde = new DefaultIndexedFile("", Paths.get("."), "example/Hello.groovy", Groovy.KEY);
 
-        inputFile = new DefaultInputFile(abcde, f -> f.setMetadata(
-                new Metadata(50, 0, "", new int[0], 0)
-        ));
+    inputFile = new DefaultInputFile(abcde, f -> f.setMetadata(
+      new Metadata(50, 0, "", new int[0], 0)
+    ));
 
-        fileSystem.add(inputFile);
+    fileSystem.add(inputFile);
 
-        pathResolver = mock(PathResolver.class);
-        sensor = new JaCoCoItSensor(configuration, new GroovyFileSystem(fileSystem), pathResolver, settings);
+    pathResolver = mock(PathResolver.class);
+    sensor = new JaCoCoItSensor(configuration, new GroovyFileSystem(fileSystem), pathResolver, settings);
+  }
+
+  @Test
+  public void test_description() {
+    DefaultSensorDescriptor defaultSensorDescriptor = new DefaultSensorDescriptor();
+    sensor.describe(defaultSensorDescriptor);
+    assertThat(defaultSensorDescriptor.languages()).containsOnly(Groovy.KEY);
+  }
+
+  @Test
+  public void should_Execute_On_Project_only_if_exec_exists() {
+    when(configuration.getItReportPath()).thenReturn("it.exec");
+    when(pathResolver.relativeFile(any(File.class), eq("it.exec"))).thenReturn(jacocoExecutionData);
+    assertThat(sensor.shouldExecuteOnProject()).isTrue();
+
+    when(pathResolver.relativeFile(any(File.class), eq("it.exec"))).thenReturn(jacocoExecutionData.getParentFile());
+    assertThat(sensor.shouldExecuteOnProject()).isFalse();
+
+    File outputDir = TestUtils.getResource(JaCoCoSensorTest.class, ".");
+    File fakeExecFile = new File(outputDir, "it.not.found.exec");
+    when(pathResolver.relativeFile(any(File.class), eq("it.exec"))).thenReturn(fakeExecFile);
+    assertThat(sensor.shouldExecuteOnProject()).isFalse();
+
+    when(pathResolver.relativeFile(any(File.class), eq("it.exec"))).thenReturn(fakeExecFile);
+    when(configuration.shouldExecuteOnProject(false)).thenReturn(true);
+    assertThat(sensor.shouldExecuteOnProject()).isTrue();
+  }
+
+  @Test
+  public void test_read_execution_data() {
+    when(pathResolver.relativeFile(any(File.class), ArgumentMatchers.endsWith(".exec"))).thenReturn(jacocoExecutionData);
+
+    SensorContextTester context = SensorContextTester.create(new File("."));
+    sensor.execute(context);
+
+    int[] oneHitlines = {9, 10, 25};
+    int[] zeroHitlines = {14, 15, 17, 21, 29, 30, 32, 33, 38, 42, 47};
+    int[] conditionLines = {14, 29, 30};
+
+    for (int zeroHitline : zeroHitlines) {
+      assertThat(context.lineHits(":example/Hello.groovy", zeroHitline)).isEqualTo(0);
     }
-
-    @Test
-    public void test_description() {
-        DefaultSensorDescriptor defaultSensorDescriptor = new DefaultSensorDescriptor();
-        sensor.describe(defaultSensorDescriptor);
-        assertThat(defaultSensorDescriptor.languages()).containsOnly(Groovy.KEY);
+    for (int oneHitline : oneHitlines) {
+      assertThat(context.lineHits(":example/Hello.groovy", oneHitline)).isEqualTo(1);
     }
-
-    @Test
-    public void should_Execute_On_Project_only_if_exec_exists() {
-        when(configuration.getItReportPath()).thenReturn("it.exec");
-        when(pathResolver.relativeFile(any(File.class), eq("it.exec"))).thenReturn(jacocoExecutionData);
-        assertThat(sensor.shouldExecuteOnProject()).isTrue();
-
-        when(pathResolver.relativeFile(any(File.class), eq("it.exec"))).thenReturn(jacocoExecutionData.getParentFile());
-        assertThat(sensor.shouldExecuteOnProject()).isFalse();
-
-        File outputDir = TestUtils.getResource(JaCoCoSensorTest.class, ".");
-        File fakeExecFile = new File(outputDir, "it.not.found.exec");
-        when(pathResolver.relativeFile(any(File.class), eq("it.exec"))).thenReturn(fakeExecFile);
-        assertThat(sensor.shouldExecuteOnProject()).isFalse();
-
-        when(pathResolver.relativeFile(any(File.class), eq("it.exec"))).thenReturn(fakeExecFile);
-        when(configuration.shouldExecuteOnProject(false)).thenReturn(true);
-        assertThat(sensor.shouldExecuteOnProject()).isTrue();
+    for (int conditionLine : conditionLines) {
+      assertThat(context.conditions(":example/Hello.groovy", conditionLine)).isEqualTo(2);
+      assertThat(context.coveredConditions(":example/Hello.groovy", conditionLine)).isEqualTo(0);
     }
-
-    @Test
-    public void test_read_execution_data() {
-        when(pathResolver.relativeFile(any(File.class), ArgumentMatchers.endsWith(".exec"))).thenReturn(jacocoExecutionData);
-
-        SensorContextTester context = SensorContextTester.create(new File("."));
-        sensor.execute(context);
-
-        int[] oneHitlines = {9, 10, 25};
-        int[] zeroHitlines = {14, 15, 17, 21, 29, 30, 32, 33, 38, 42, 47};
-        int[] conditionLines = {14, 29, 30};
-
-        for (int zeroHitline : zeroHitlines) {
-            assertThat(context.lineHits(":example/Hello.groovy", zeroHitline)).isEqualTo(0);
-        }
-        for (int oneHitline : oneHitlines) {
-            assertThat(context.lineHits(":example/Hello.groovy", oneHitline)).isEqualTo(1);
-        }
-        for (int conditionLine : conditionLines) {
-            assertThat(context.conditions(":example/Hello.groovy", conditionLine)).isEqualTo(2);
-            assertThat(context.coveredConditions(":example/Hello.groovy", conditionLine)).isEqualTo(0);
-        }
-    }
+  }
 
 }
