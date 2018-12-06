@@ -19,6 +19,12 @@
  */
 package org.sonar.plugins.groovy.surefire;
 
+import java.io.File;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import javax.xml.stream.XMLStreamException;
 import org.apache.commons.lang3.StringUtils;
 import org.sonar.api.batch.ScannerSide;
 import org.sonar.api.batch.fs.FilePredicate;
@@ -41,13 +47,6 @@ import org.sonar.plugins.groovy.surefire.data.UnitTestClassReport;
 import org.sonar.plugins.groovy.surefire.data.UnitTestIndex;
 import org.sonar.plugins.groovy.surefire.data.UnitTestResult;
 import org.sonar.plugins.groovy.utils.StaxParser;
-
-import javax.xml.stream.XMLStreamException;
-import java.io.File;
-import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 @ScannerSide
 public class GroovySurefireParser {
