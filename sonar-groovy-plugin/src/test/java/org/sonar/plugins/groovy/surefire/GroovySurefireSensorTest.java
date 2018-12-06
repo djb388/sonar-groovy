@@ -56,183 +56,181 @@ import static org.mockito.Mockito.when;
  */
 public class GroovySurefireSensorTest {
 
-    private DefaultFileSystem fs = new DefaultFileSystem(new File("."));
-    private ResourcePerspectives perspectives;
-    private GroovySurefireSensor surefireSensor;
-    private final PathResolver pathResolver = new PathResolver();
-    private Groovy groovy;
-    private SensorContext context;
+  private DefaultFileSystem fs = new DefaultFileSystem(new File("."));
+  private ResourcePerspectives perspectives;
+  private GroovySurefireSensor surefireSensor;
+  private final PathResolver pathResolver = new PathResolver();
+  private Groovy groovy;
+  private SensorContext context;
 
-    @Before
-    public void before() {
-        fs = new DefaultFileSystem(new File("."));
+  @Before
+  public void before() {
+    fs = new DefaultFileSystem(new File("."));
 
-        DefaultIndexedFile indexedFile = new DefaultIndexedFile("", Paths.get("."), "src/org/foo/grvy", Groovy.KEY);
-        DefaultInputFile groovyFile = new DefaultInputFile(indexedFile, f -> {});
+    DefaultIndexedFile indexedFile = new DefaultIndexedFile("", Paths.get("."), "src/org/foo/grvy", Groovy.KEY);
+    DefaultInputFile groovyFile = new DefaultInputFile(indexedFile, f -> {});
 
-        fs.add(groovyFile);
-        perspectives = mock(ResourcePerspectives.class);
+    fs.add(groovyFile);
+    perspectives = mock(ResourcePerspectives.class);
 
-        context = mock(SensorContext.class);
+    context = mock(SensorContext.class);
 
-        Settings settings = mock(Settings.class);
-        when(settings.getStringArray(GroovyPlugin.FILE_SUFFIXES_KEY)).thenReturn(new String[]{".groovy", "grvy"});
-        groovy = new Groovy(settings);
+    Settings settings = mock(Settings.class);
+    when(settings.getStringArray(GroovyPlugin.FILE_SUFFIXES_KEY)).thenReturn(new String[] {".groovy", "grvy"});
+    groovy = new Groovy(settings);
 
-        GroovySurefireParser parser = spy(new GroovySurefireParser(groovy, perspectives, fs));
+    GroovySurefireParser parser = spy(new GroovySurefireParser(groovy, perspectives, fs));
 
-        doAnswer(
-                (Answer<InputFile>) invocation -> inputFile((String) invocation.getArguments()[0])
-        ).when(parser).getUnitTestInputFile(anyString());
+    doAnswer((Answer<InputFile>) invocation -> inputFile((String) invocation.getArguments()[0]))
+      .when(parser).getUnitTestInputFile(anyString());
 
-        surefireSensor = new GroovySurefireSensor(parser, mock(Settings.class), fs, pathResolver);
-    }
+    surefireSensor = new GroovySurefireSensor(parser, mock(Settings.class), fs, pathResolver);
+  }
 
-    @Test
-    public void test_description() {
-        surefireSensor = new GroovySurefireSensor(new GroovySurefireParser(groovy, perspectives, fs), mock(Settings.class), fs, pathResolver);
-        DefaultSensorDescriptor defaultSensorDescriptor = new DefaultSensorDescriptor();
-        surefireSensor.describe(defaultSensorDescriptor);
-        assertThat(defaultSensorDescriptor.languages()).containsOnly(Groovy.KEY);
-    }
+  @Test
+  public void test_description() {
+    surefireSensor = new GroovySurefireSensor(new GroovySurefireParser(groovy, perspectives, fs), mock(Settings.class), fs, pathResolver);
+    DefaultSensorDescriptor defaultSensorDescriptor = new DefaultSensorDescriptor();
+    surefireSensor.describe(defaultSensorDescriptor);
+    assertThat(defaultSensorDescriptor.languages()).containsOnly(Groovy.KEY);
+  }
 
-    @Test
-    public void shouldNotFailIfReportsNotFound() {
-        Settings settings = mock(Settings.class);
-        when(settings.getString(SurefireUtils.SUREFIRE_REPORTS_PATH_PROPERTY)).thenReturn("unknown");
+  @Test
+  public void shouldNotFailIfReportsNotFound() {
+    Settings settings = mock(Settings.class);
+    when(settings.getString(SurefireUtils.SUREFIRE_REPORTS_PATH_PROPERTY)).thenReturn("unknown");
 
-        GroovySurefireSensor surefireSensor = new GroovySurefireSensor(mock(GroovySurefireParser.class), settings, fs, pathResolver);
-        surefireSensor.execute(mock(SensorContext.class));
-    }
+    GroovySurefireSensor surefireSensor = new GroovySurefireSensor(mock(GroovySurefireParser.class), settings, fs, pathResolver);
+    surefireSensor.execute(mock(SensorContext.class));
+  }
 
-    @Test
-    public void shouldHandleTestSuiteDetails() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File(""));
+  @Test
+  public void shouldHandleTestSuiteDetails() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File(""));
+    context.fileSystem()
+      .add(inputFile("org.sonar.core.ExtensionsFinderTest"))
+      .add(inputFile("org.sonar.core.ExtensionsFinderTest2"))
+      .add(inputFile("org.sonar.core.ExtensionsFinderTest3"));
+    surefireSensor.collect(context, new File(getClass().getResource(
+      "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/shouldHandleTestSuiteDetails/").toURI()));
 
-        context.fileSystem()
-                .add(inputFile("org.sonar.core.ExtensionsFinderTest"))
-                .add(inputFile("org.sonar.core.ExtensionsFinderTest2"))
-                .add(inputFile("org.sonar.core.ExtensionsFinderTest3"));
-        surefireSensor.collect(context, new File(getClass().getResource(
-                "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/shouldHandleTestSuiteDetails/").toURI()));
+    // 3 classes, 6 measures by class
+    assertThat(context.measures(":org.sonar.core.ExtensionsFinderTest")).hasSize(6);
+    assertThat(context.measures(":org.sonar.core.ExtensionsFinderTest2")).hasSize(6);
+    assertThat(context.measures(":org.sonar.core.ExtensionsFinderTest3")).hasSize(6);
 
-        // 3 classes, 6 measures by class
-        assertThat(context.measures(":org.sonar.core.ExtensionsFinderTest")).hasSize(6);
-        assertThat(context.measures(":org.sonar.core.ExtensionsFinderTest2")).hasSize(6);
-        assertThat(context.measures(":org.sonar.core.ExtensionsFinderTest3")).hasSize(6);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TESTS).value()).isEqualTo(4);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TEST_EXECUTION_TIME).value()).isEqualTo(111);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TEST_FAILURES).value()).isEqualTo(1);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TEST_ERRORS).value()).isEqualTo(1);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(0);
 
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TESTS).value()).isEqualTo(4);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TEST_EXECUTION_TIME).value()).isEqualTo(111);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TEST_FAILURES).value()).isEqualTo(1);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TEST_ERRORS).value()).isEqualTo(1);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.TESTS).value()).isEqualTo(2);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.TEST_EXECUTION_TIME).value()).isEqualTo(2);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.TEST_FAILURES).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(0);
 
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.TESTS).value()).isEqualTo(2);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.TEST_EXECUTION_TIME).value()).isEqualTo(2);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.TEST_FAILURES).value()).isEqualTo(0);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest2", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.TESTS).value()).isEqualTo(1);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.TEST_EXECUTION_TIME).value()).isEqualTo(16);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.TEST_FAILURES).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(1);
+  }
 
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.TESTS).value()).isEqualTo(1);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.TEST_EXECUTION_TIME).value()).isEqualTo(16);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.TEST_FAILURES).value()).isEqualTo(0);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest3", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(1);
-    }
+  private static DefaultInputFile inputFile(String key) {
+    Path baseDir = Paths.get(".");
 
-    private static DefaultInputFile inputFile(String key) {
-        Path baseDir = Paths.get(".");
+    DefaultIndexedFile indexedFile = new DefaultIndexedFile(
+      baseDir.resolve(key), "", key, key, Type.TEST, Groovy.KEY, 0,
+      new SensorStrategy());
 
-        DefaultIndexedFile indexedFile = new DefaultIndexedFile(
-                baseDir.resolve(key), "", key, key, Type.TEST, Groovy.KEY, 0,
-                new SensorStrategy());
+    return new DefaultInputFile(indexedFile, f -> {});
+  }
 
-        return new DefaultInputFile(indexedFile, f -> {});
-    }
+  @Test
+  public void shouldSaveErrorsAndFailuresInXML() throws URISyntaxException {
 
-    @Test
-    public void shouldSaveErrorsAndFailuresInXML() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File(""));
+    context.fileSystem()
+      .add(inputFile("org.sonar.core.ExtensionsFinderTest"))
+      .add(inputFile("org.sonar.core.ExtensionsFinderTest2"))
+      .add(inputFile("org.sonar.core.ExtensionsFinderTest3"));
 
-        SensorContextTester context = SensorContextTester.create(new File(""));
-        context.fileSystem()
-                .add(inputFile("org.sonar.core.ExtensionsFinderTest"))
-                .add(inputFile("org.sonar.core.ExtensionsFinderTest2"))
-                .add(inputFile("org.sonar.core.ExtensionsFinderTest3"));
+    surefireSensor.collect(context, new File(getClass().getResource(
+      "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/shouldSaveErrorsAndFailuresInXML/").toURI()));
 
-        surefireSensor.collect(context, new File(getClass().getResource(
-                "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/shouldSaveErrorsAndFailuresInXML/").toURI()));
+    // 1 classes, 6 measures by class
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(1);
+    assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TESTS).value()).isEqualTo(7);
+    assertThat(context.measures(":org.sonar.core.ExtensionsFinderTest")).hasSize(6);
+  }
 
-        // 1 classes, 6 measures by class
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(1);
-        assertThat(context.measure(":org.sonar.core.ExtensionsFinderTest", CoreMetrics.TESTS).value()).isEqualTo(7);
-        assertThat(context.measures(":org.sonar.core.ExtensionsFinderTest")).hasSize(6);
-    }
+  @Test
+  public void shouldManageClassesWithDefaultPackage() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File(""));
+    context.fileSystem().add(inputFile("NoPackagesTest"));
 
-    @Test
-    public void shouldManageClassesWithDefaultPackage() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File(""));
-        context.fileSystem().add(inputFile("NoPackagesTest"));
+    surefireSensor.collect(context, new File(getClass().getResource(
+      "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/shouldManageClassesWithDefaultPackage/").toURI()));
 
-        surefireSensor.collect(context, new File(getClass().getResource(
-                "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/shouldManageClassesWithDefaultPackage/").toURI()));
+    assertThat(context.measure(":NoPackagesTest", CoreMetrics.TESTS).value()).isEqualTo(2);
+  }
 
-        assertThat(context.measure(":NoPackagesTest", CoreMetrics.TESTS).value()).isEqualTo(2);
-    }
+  @Test
+  public void successRatioIsZeroWhenAllTestsFail() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File(""));
+    context.fileSystem().add(inputFile("org.sonar.Foo"));
 
-    @Test
-    public void successRatioIsZeroWhenAllTestsFail() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File(""));
-        context.fileSystem().add(inputFile("org.sonar.Foo"));
+    surefireSensor.collect(context, new File(getClass().getResource(
+      "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/successRatioIsZeroWhenAllTestsFail/").toURI()));
 
-        surefireSensor.collect(context, new File(getClass().getResource(
-                "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/successRatioIsZeroWhenAllTestsFail/").toURI()));
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TESTS).value()).isEqualTo(2);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_FAILURES).value()).isEqualTo(1);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_ERRORS).value()).isEqualTo(1);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_SUCCESS_DENSITY).value()).isEqualTo(0);
+  }
 
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TESTS).value()).isEqualTo(2);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_FAILURES).value()).isEqualTo(1);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_ERRORS).value()).isEqualTo(1);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_SUCCESS_DENSITY).value()).isEqualTo(0);
-    }
+  @Test
+  public void measuresShouldNotIncludeSkippedTests() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File(""));
+    context.fileSystem().add(inputFile("org.sonar.Foo"));
 
-    @Test
-    public void measuresShouldNotIncludeSkippedTests() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File(""));
-        context.fileSystem().add(inputFile("org.sonar.Foo"));
+    surefireSensor.collect(context, new File(getClass().getResource(
+      "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/measuresShouldNotIncludeSkippedTests/").toURI()));
 
-        surefireSensor.collect(context, new File(getClass().getResource(
-                "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/measuresShouldNotIncludeSkippedTests/").toURI()));
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TESTS).value()).isEqualTo(2);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_FAILURES).value()).isEqualTo(1);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(1);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_SUCCESS_DENSITY).value()).isEqualTo(50);
+  }
 
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TESTS).value()).isEqualTo(2);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_FAILURES).value()).isEqualTo(1);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(1);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_SUCCESS_DENSITY).value()).isEqualTo(50);
-    }
+  @Test
+  public void noSuccessRatioIfNoTests() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File(""));
+    context.fileSystem().add(inputFile("org.sonar.Foo"));
 
-    @Test
-    public void noSuccessRatioIfNoTests() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File(""));
-        context.fileSystem().add(inputFile("org.sonar.Foo"));
+    surefireSensor.collect(context, new File(getClass().getResource(
+      "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/noSuccessRatioIfNoTests/").toURI()));
 
-        surefireSensor.collect(context, new File(getClass().getResource(
-                "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/noSuccessRatioIfNoTests/").toURI()));
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TESTS).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_FAILURES).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(2);
+    assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_SUCCESS_DENSITY)).isNull();
+  }
 
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TESTS).value()).isEqualTo(0);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_FAILURES).value()).isEqualTo(0);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(2);
-        assertThat(context.measure(":org.sonar.Foo", CoreMetrics.TEST_SUCCESS_DENSITY)).isNull();
-    }
+  @Test
+  public void ignoreSuiteAsInnerClass() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File(""));
+    context.fileSystem().add(inputFile("org.sonar.Foo"));
 
-    @Test
-    public void ignoreSuiteAsInnerClass() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File(""));
-        context.fileSystem().add(inputFile("org.sonar.Foo"));
+    surefireSensor.collect(context, new File(getClass().getResource(
+      "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/ignoreSuiteAsInnerClass/").toURI()));
 
-        surefireSensor.collect(context, new File(getClass().getResource(
-                "/org/sonar/plugins/groovy/surefire/SurefireSensorTest/ignoreSuiteAsInnerClass/").toURI()));
-
-        // ignore TestHandler$Input.xml
-        assertThat(context.measure(":org.apache.shindig.protocol.TestHandler", CoreMetrics.TESTS).value()).isEqualTo(0);
-        assertThat(context.measure(":org.apache.shindig.protocol.TestHandler", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(1);
-    }
+    // ignore TestHandler$Input.xml
+    assertThat(context.measure(":org.apache.shindig.protocol.TestHandler", CoreMetrics.TESTS).value()).isEqualTo(0);
+    assertThat(context.measure(":org.apache.shindig.protocol.TestHandler", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(1);
+  }
 }

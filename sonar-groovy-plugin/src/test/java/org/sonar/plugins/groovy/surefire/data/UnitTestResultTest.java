@@ -25,27 +25,27 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class UnitTestResultTest {
-    @Test
-    public void shouldBeError() {
-        UnitTestResult result = new UnitTestResult().setStatus(UnitTestResult.STATUS_ERROR);
-        assertThat(result.getStatus(), is(UnitTestResult.STATUS_ERROR));
-        assertThat(result.isError(), is(true));
-        assertThat(result.isErrorOrFailure(), is(true));
-    }
+  @Test
+  public void shouldBeError() {
+    UnitTestResult result = new UnitTestResult().setStatus(UnitTestResult.STATUS_ERROR);
+    assertThat(result.getStatus(), is(UnitTestResult.STATUS_ERROR));
+    assertThat(result.isError(), is(true));
+    assertThat(result.isErrorOrFailure(), is(true));
+  }
 
-    @Test
-    public void shouldBeFailure() {
-        UnitTestResult result = new UnitTestResult().setStatus(UnitTestResult.STATUS_FAILURE);
-        assertThat(result.getStatus(), is(UnitTestResult.STATUS_FAILURE));
-        assertThat(result.isError(), is(false));
-        assertThat(result.isErrorOrFailure(), is(true));
-    }
+  @Test
+  public void shouldBeFailure() {
+    UnitTestResult result = new UnitTestResult().setStatus(UnitTestResult.STATUS_FAILURE);
+    assertThat(result.getStatus(), is(UnitTestResult.STATUS_FAILURE));
+    assertThat(result.isError(), is(false));
+    assertThat(result.isErrorOrFailure(), is(true));
+  }
 
-    @Test
-    public void shouldBeSuccess() {
-        UnitTestResult result = new UnitTestResult().setStatus(UnitTestResult.STATUS_OK);
-        assertThat(result.getStatus(), is(UnitTestResult.STATUS_OK));
-        assertThat(result.isError(), is(false));
-        assertThat(result.isErrorOrFailure(), is(false));
-    }
+  @Test
+  public void shouldBeSuccess() {
+    UnitTestResult result = new UnitTestResult().setStatus(UnitTestResult.STATUS_OK);
+    assertThat(result.getStatus(), is(UnitTestResult.STATUS_OK));
+    assertThat(result.isError(), is(false));
+    assertThat(result.isErrorOrFailure(), is(false));
+  }
 }

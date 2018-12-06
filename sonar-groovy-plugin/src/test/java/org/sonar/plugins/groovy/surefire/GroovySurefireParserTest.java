@@ -19,6 +19,10 @@
  */
 package org.sonar.plugins.groovy.surefire;
 
+import java.io.File;
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -41,11 +45,6 @@ import org.sonar.api.test.TestCase;
 import org.sonar.plugins.groovy.GroovyPlugin;
 import org.sonar.plugins.groovy.foundation.Groovy;
 
-import java.io.File;
-import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -55,173 +54,171 @@ import static org.mockito.Mockito.*;
  */
 public class GroovySurefireParserTest {
 
-    private ResourcePerspectives perspectives;
-    private FileSystem fs;
-    private GroovySurefireParser parser;
-    private Groovy groovy;
-    private SensorContext context;
+  private ResourcePerspectives perspectives;
+  private FileSystem fs;
+  private GroovySurefireParser parser;
+  private Groovy groovy;
+  private SensorContext context;
 
-    @Before
-    public void before() {
-        context = mock(SensorContext.class);
-        perspectives = mock(ResourcePerspectives.class);
-        fs = new DefaultFileSystem(new File("."));
+  @Before
+  public void before() {
+    context = mock(SensorContext.class);
+    perspectives = mock(ResourcePerspectives.class);
+    fs = new DefaultFileSystem(new File("."));
 
-        Settings settings = mock(Settings.class);
-        when(settings.getStringArray(GroovyPlugin.FILE_SUFFIXES_KEY)).thenReturn(new String[]{".groovy", "grvy"});
-        groovy = new Groovy(settings);
+    Settings settings = mock(Settings.class);
+    when(settings.getStringArray(GroovyPlugin.FILE_SUFFIXES_KEY)).thenReturn(new String[] {".groovy", "grvy"});
+    groovy = new Groovy(settings);
 
-        parser = spy(new GroovySurefireParser(groovy, perspectives, fs));
+    parser = spy(new GroovySurefireParser(groovy, perspectives, fs));
 
-        doAnswer((Answer<InputFile>) invocation ->
-                new DefaultInputFile(
-                        new DefaultIndexedFile("", Paths.get("."), (String) invocation.getArguments()[0], Groovy.KEY), f -> {}
-                )).when(parser).getUnitTestInputFile(anyString()
-        );
-    }
+    doAnswer((Answer<InputFile>) invocation ->
+            new DefaultInputFile(
+                    new DefaultIndexedFile("", Paths.get("."), (String) invocation.getArguments()[0], Groovy.KEY), f -> {}
+            )).when(parser).getUnitTestInputFile(anyString());
+  }
 
-    @Test
-    public void should_register_tests() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
+  @Test
+  public void should_register_tests() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
 
-        MutableTestCase testCase = mock(MutableTestCase.class);
-        when(testCase.setDurationInMs(anyLong())).thenReturn(testCase);
-        when(testCase.setStatus(any(TestCase.Status.class))).thenReturn(testCase);
-        when(testCase.setMessage(nullable(String.class))).thenReturn(testCase);
-        when(testCase.setStackTrace(anyString())).thenReturn(testCase);
-        when(testCase.setType(anyString())).thenReturn(testCase);
-        MutableTestPlan testPlan = mock(MutableTestPlan.class);
-        when(testPlan.addTestCase(anyString())).thenReturn(testCase);
+    MutableTestCase testCase = mock(MutableTestCase.class);
+    when(testCase.setDurationInMs(anyLong())).thenReturn(testCase);
+    when(testCase.setStatus(any(TestCase.Status.class))).thenReturn(testCase);
+    when(testCase.setMessage(nullable(String.class))).thenReturn(testCase);
+    when(testCase.setStackTrace(anyString())).thenReturn(testCase);
+    when(testCase.setType(anyString())).thenReturn(testCase);
+    MutableTestPlan testPlan = mock(MutableTestPlan.class);
+    when(testPlan.addTestCase(anyString())).thenReturn(testCase);
+    when(perspectives.as(eq(MutableTestPlan.class),
+      argThat(inputFileMatcher(":ch.hortis.sonar.mvn.mc.MetricsCollectorRegistryTest")))).thenReturn(testPlan);
 
-        when(perspectives.as(eq(MutableTestPlan.class),
-                argThat(inputFileMatcher(":ch.hortis.sonar.mvn.mc.MetricsCollectorRegistryTest")))).thenReturn(testPlan);
+    parser.collect(context, getDir("multipleReports"));
 
-        parser.collect(context, getDir("multipleReports"));
+    verify(testPlan).addTestCase("testGetUnKnownCollector");
+    verify(testPlan).addTestCase("testGetJDependsCollector");
+  }
 
-        verify(testPlan).addTestCase("testGetUnKnownCollector");
-        verify(testPlan).addTestCase("testGetJDependsCollector");
-    }
+  private static ArgumentMatcher<InputFile> inputFileMatcher(final String fileName) {
+    return arg0 -> fileName.equals(arg0.key());
+  }
 
-    private static ArgumentMatcher<InputFile> inputFileMatcher(final String fileName) {
-        return arg0 -> fileName.equals(arg0.key());
-    }
+  @Test
+  public void should_store_zero_tests_when_directory_is_null_or_non_existing_or_a_file() throws Exception {
+    parser.collect(context, null);
+    verify(context, never()).newMeasure();
 
-    @Test
-    public void should_store_zero_tests_when_directory_is_null_or_non_existing_or_a_file() throws Exception {
-        parser.collect(context, null);
-        verify(context, never()).newMeasure();
+    context = mock(SensorContext.class);
+    parser.collect(context, getDir("nonExistingReportsDirectory"));
+    verify(context, never()).newMeasure();
 
-        context = mock(SensorContext.class);
-        parser.collect(context, getDir("nonExistingReportsDirectory"));
-        verify(context, never()).newMeasure();
+    context = mock(SensorContext.class);
+    parser.collect(context, getDir("file.txt"));
+    verify(context, never()).newMeasure();
+  }
 
-        context = mock(SensorContext.class);
-        parser.collect(context, getDir("file.txt"));
-        verify(context, never()).newMeasure();
-    }
+  @Test
+  public void shouldAggregateReports() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
 
-    @Test
-    public void shouldAggregateReports() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
+    parser.collect(context, getDir("multipleReports"));
 
-        parser.collect(context, getDir("multipleReports"));
+    // Only 6 tests measures should be stored, no more: the TESTS-AllTests.xml must not be read as there's 1 file result per unit test
+    // (SONAR-2841).
+    assertThat(context.measures(":ch.hortis.sonar.mvn.mc.MetricsCollectorRegistryTest")).hasSize(6);
+    assertThat(context.measures(":ch.hortis.sonar.mvn.mc.CloverCollectorTest")).hasSize(6);
+    assertThat(context.measures(":ch.hortis.sonar.mvn.mc.CheckstyleCollectorTest")).hasSize(6);
+    assertThat(context.measures(":ch.hortis.sonar.mvn.SonarMojoTest")).hasSize(6);
+    assertThat(context.measures(":ch.hortis.sonar.mvn.mc.JDependsCollectorTest")).hasSize(6);
+    assertThat(context.measures(":ch.hortis.sonar.mvn.mc.JavaNCSSCollectorTest")).hasSize(6);
+  }
 
-        // Only 6 tests measures should be stored, no more: the TESTS-AllTests.xml must not be read as there's 1 file result per unit test
-        // (SONAR-2841).
-        assertThat(context.measures(":ch.hortis.sonar.mvn.mc.MetricsCollectorRegistryTest")).hasSize(6);
-        assertThat(context.measures(":ch.hortis.sonar.mvn.mc.CloverCollectorTest")).hasSize(6);
-        assertThat(context.measures(":ch.hortis.sonar.mvn.mc.CheckstyleCollectorTest")).hasSize(6);
-        assertThat(context.measures(":ch.hortis.sonar.mvn.SonarMojoTest")).hasSize(6);
-        assertThat(context.measures(":ch.hortis.sonar.mvn.mc.JDependsCollectorTest")).hasSize(6);
-        assertThat(context.measures(":ch.hortis.sonar.mvn.mc.JavaNCSSCollectorTest")).hasSize(6);
-    }
+  // SONAR-2841: if there's only a test suite report, then it should be read.
+  @Test
+  public void shouldUseTestSuiteReportIfAlone() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
 
-    // SONAR-2841: if there's only a test suite report, then it should be read.
-    @Test
-    public void shouldUseTestSuiteReportIfAlone() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
+    parser.collect(context, getDir("onlyTestSuiteReport"));
 
-        parser.collect(context, getDir("onlyTestSuiteReport"));
+    assertThat(context.measures(":org.sonar.SecondTest")).hasSize(6);
+    assertThat(context.measures(":org.sonar.JavaNCSSCollectorTest")).hasSize(6);
+  }
 
-        assertThat(context.measures(":org.sonar.SecondTest")).hasSize(6);
-        assertThat(context.measures(":org.sonar.JavaNCSSCollectorTest")).hasSize(6);
-    }
+  /**
+   * See http://jira.codehaus.org/browse/SONAR-2371
+   */
+  @Test
+  public void shouldInsertZeroWhenNoReports() throws URISyntaxException {
+    SensorContext context = mock(SensorContext.class);
+    parser.collect(context, getDir("noReports"));
+    verify(context, never()).newMeasure();
+  }
 
-    /**
-     * See http://jira.codehaus.org/browse/SONAR-2371
-     */
-    @Test
-    public void shouldInsertZeroWhenNoReports() throws URISyntaxException {
-        SensorContext context = mock(SensorContext.class);
-        parser.collect(context, getDir("noReports"));
-        verify(context, never()).newMeasure();
-    }
+  @Test
+  public void shouldNotInsertZeroOnFiles() throws URISyntaxException {
+    SensorContext context = mock(SensorContext.class);
+    parser.collect(context, getDir("noTests"));
 
-    @Test
-    public void shouldNotInsertZeroOnFiles() throws URISyntaxException {
-        SensorContext context = mock(SensorContext.class);
-        parser.collect(context, getDir("noTests"));
+    verify(context, never()).newMeasure();
+  }
 
-        verify(context, never()).newMeasure();
-    }
+  @Test
+  public void shouldMergeInnerClasses() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
+    parser.collect(context, getDir("innerClasses"));
 
-    @Test
-    public void shouldMergeInnerClasses() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
-        parser.collect(context, getDir("innerClasses"));
+    assertThat(context.measure(":org.apache.commons.collections.bidimap.AbstractTestBidiMap", CoreMetrics.TESTS).value()).isEqualTo(7);
+    assertThat(context.measure(":org.apache.commons.collections.bidimap.AbstractTestBidiMap", CoreMetrics.TEST_ERRORS).value()).isEqualTo(1);
+    assertThat(context.measures(":org.apache.commons.collections.bidimap.AbstractTestBidiMap$TestBidiMapEntrySet")).isEmpty();
+  }
 
-        assertThat(context.measure(":org.apache.commons.collections.bidimap.AbstractTestBidiMap", CoreMetrics.TESTS).value()).isEqualTo(7);
-        assertThat(context.measure(":org.apache.commons.collections.bidimap.AbstractTestBidiMap", CoreMetrics.TEST_ERRORS).value()).isEqualTo(1);
-        assertThat(context.measures(":org.apache.commons.collections.bidimap.AbstractTestBidiMap$TestBidiMapEntrySet")).isEmpty();
-    }
+  @Test
+  public void shouldMergeNestedInnerClasses() {
+    SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
+    parser.collect(context, getDir("nestedInnerClasses"));
 
-    @Test
-    public void shouldMergeNestedInnerClasses() {
-        SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
-        parser.collect(context, getDir("nestedInnerClasses"));
+    assertThat(context.measure(":org.sonar.plugins.surefire.NestedInnerTest", CoreMetrics.TESTS).value()).isEqualTo(3);
+  }
 
-        assertThat(context.measure(":org.sonar.plugins.surefire.NestedInnerTest", CoreMetrics.TESTS).value()).isEqualTo(3);
-    }
+  @Test
+  public void should_not_count_negative_tests() throws URISyntaxException {
+    SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
+    parser.collect(context, getDir("negativeTestTime"));
+    // Test times : -1.120, 0.644, 0.015 -> computed time : 0.659, ignore negative time.
 
-    @Test
-    public void should_not_count_negative_tests() throws URISyntaxException {
-        SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
-        parser.collect(context, getDir("negativeTestTime"));
-        // Test times : -1.120, 0.644, 0.015 -> computed time : 0.659, ignore negative time.
+    assertThat(context.measure(":java.Foo", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(0);
+    assertThat(context.measure(":java.Foo", CoreMetrics.TESTS).value()).isEqualTo(6);
+    assertThat(context.measure(":java.Foo", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
+    assertThat(context.measure(":java.Foo", CoreMetrics.TEST_FAILURES).value()).isEqualTo(0);
+    assertThat(context.measure(":java.Foo", CoreMetrics.TEST_EXECUTION_TIME).value()).isEqualTo(659);
+  }
 
-        assertThat(context.measure(":java.Foo", CoreMetrics.SKIPPED_TESTS).value()).isEqualTo(0);
-        assertThat(context.measure(":java.Foo", CoreMetrics.TESTS).value()).isEqualTo(6);
-        assertThat(context.measure(":java.Foo", CoreMetrics.TEST_ERRORS).value()).isEqualTo(0);
-        assertThat(context.measure(":java.Foo", CoreMetrics.TEST_FAILURES).value()).isEqualTo(0);
-        assertThat(context.measure(":java.Foo", CoreMetrics.TEST_EXECUTION_TIME).value()).isEqualTo(659);
-    }
+  private File getDir(String dirname) {
+    return new File("src/test/resources/org/sonar/plugins/groovy/surefire/SurefireParserTest/" + dirname);
+  }
 
-    private File getDir(String dirname) {
-        return new File("src/test/resources/org/sonar/plugins/groovy/surefire/SurefireParserTest/" + dirname);
-    }
+  @Test
+  public void should_generate_correct_predicate() throws URISyntaxException {
+    DefaultFileSystem fs = new DefaultFileSystem(new File("."));
 
-    @Test
-    public void should_generate_correct_predicate() throws URISyntaxException {
-        DefaultFileSystem fs = new DefaultFileSystem(new File("."));
+    Path baseDir = Paths.get(".");
+    String relativePath = "src/test/org/sonar/JavaNCSSCollectorTest.groovy";
 
-        Path baseDir = Paths.get(".");
-        String relativePath = "src/test/org/sonar/JavaNCSSCollectorTest.groovy";
-
-        DefaultIndexedFile indexedFile = new DefaultIndexedFile(
+    DefaultIndexedFile indexedFile = new DefaultIndexedFile(
                 baseDir.resolve(relativePath), "", relativePath, relativePath, Type.TEST, Groovy.KEY, 0,
                 new SensorStrategy());
 
-        DefaultInputFile inputFile = new DefaultInputFile(indexedFile, f -> {});
+    DefaultInputFile inputFile = new DefaultInputFile(indexedFile, f -> {});
 
-        fs.add(inputFile);
+    fs.add(inputFile);
 
-        parser = new GroovySurefireParser(groovy, perspectives, fs);
+    parser = new GroovySurefireParser(groovy, perspectives, fs);
 
-        SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
-        context.setFileSystem(fs);
-        parser.collect(context, getDir("onlyTestSuiteReport"));
+    SensorContextTester context = SensorContextTester.create(new File("src/test/resources"));
+    context.setFileSystem(fs);
+    parser.collect(context, getDir("onlyTestSuiteReport"));
 
-        assertThat(context.measure(":src/test/org/sonar/JavaNCSSCollectorTest.groovy", CoreMetrics.TESTS).value()).isEqualTo(11);
-    }
+    assertThat(context.measure(":src/test/org/sonar/JavaNCSSCollectorTest.groovy", CoreMetrics.TESTS).value()).isEqualTo(11);
+  }
 
 }
