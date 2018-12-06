@@ -28,20 +28,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GroovyTest {
 
-    @Test
-    public void test() {
-        Settings settings = new MapSettings();
-        Groovy language = new Groovy(settings);
+  @Test
+  public void test() {
+    Settings settings = new MapSettings();
+    Groovy language = new Groovy(settings);
+    assertThat(language.getKey()).isEqualTo("grvy");
+    assertThat(language.getName()).isEqualTo("Groovy");
+    assertThat(language.getFileSuffixes()).isEqualTo(new String[] {".groovy"});
 
-        assertThat(language.getKey()).isEqualTo("grvy");
-        assertThat(language.getName()).isEqualTo("Groovy");
-        assertThat(language.getFileSuffixes()).isEqualTo(new String[]{".groovy"});
+    settings.setProperty(GroovyPlugin.FILE_SUFFIXES_KEY, "");
+    assertThat(language.getFileSuffixes()).containsOnly(".groovy");
 
-        settings.setProperty(GroovyPlugin.FILE_SUFFIXES_KEY, "");
-        assertThat(language.getFileSuffixes()).containsOnly(".groovy");
-
-        settings.setProperty(GroovyPlugin.FILE_SUFFIXES_KEY, ".groovy, .grvy");
-        assertThat(language.getFileSuffixes()).containsOnly(".groovy", ".grvy");
-    }
+    settings.setProperty(GroovyPlugin.FILE_SUFFIXES_KEY, ".groovy, .grvy");
+    assertThat(language.getFileSuffixes()).containsOnly(".groovy", ".grvy");
+  }
 
 }

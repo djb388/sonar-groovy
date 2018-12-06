@@ -19,47 +19,46 @@
  */
 package org.sonar.plugins.groovy.codenarc;
 
+import java.util.LinkedList;
+import java.util.List;
 import org.junit.Test;
 import org.sonar.api.server.rule.RulesDefinition.Context;
 import org.sonar.api.server.rule.RulesDefinition.Repository;
 import org.sonar.api.server.rule.RulesDefinition.Rule;
 import org.sonar.plugins.groovy.foundation.Groovy;
 
-import java.util.LinkedList;
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class CodeNarcRulesDefinitionTest {
 
-    @Test
-    public void test() {
-        CodeNarcRulesDefinition definition = new CodeNarcRulesDefinition();
-        Context context = new Context();
-        definition.define(context);
-        Repository repository = context.repository(CodeNarcRulesDefinition.REPOSITORY_KEY);
+  @Test
+  public void test() {
+    CodeNarcRulesDefinition definition = new CodeNarcRulesDefinition();
+    Context context = new Context();
+    definition.define(context);
+    Repository repository = context.repository(CodeNarcRulesDefinition.REPOSITORY_KEY);
 
-        assertThat(repository.name()).isEqualTo(CodeNarcRulesDefinition.REPOSITORY_NAME);
-        assertThat(repository.language()).isEqualTo(Groovy.KEY);
+    assertThat(repository.name()).isEqualTo(CodeNarcRulesDefinition.REPOSITORY_NAME);
+    assertThat(repository.language()).isEqualTo(Groovy.KEY);
 
-        List<Rule> rules = repository.rules();
-        assertThat(rules).hasSize(347);
+    List<Rule> rules = repository.rules();
+    assertThat(rules).hasSize(347);
 
-        List<String> missingDebt = new LinkedList<>();
-        for (Rule rule : rules) {
-            assertThat(rule.key()).isNotNull();
-            assertThat(rule.internalKey()).isNotNull();
-            assertThat(rule.name()).isNotNull();
-            assertThat(rule.htmlDescription()).isNotNull();
-            if (rule.debtRemediationFunction() == null) {
-                missingDebt.add(rule.key());
-            }
-        }
-        // From SONARGROOV-36, 'org.codenarc.rule.generic.IllegalSubclassRule' does not have debt by purpose
-        assertThat(missingDebt).containsOnly("org.codenarc.rule.generic.IllegalSubclassRule.fixed");
-
-        Rule rule = repository.rule("org.codenarc.rule.braces.ElseBlockBracesRule");
-        assertThat(rule.params()).hasSize(1);
-        assertThat(rule.params().get(0).defaultValue()).isEqualToIgnoringCase("false");
+    List<String> missingDebt = new LinkedList<>();
+    for (Rule rule : rules) {
+      assertThat(rule.key()).isNotNull();
+      assertThat(rule.internalKey()).isNotNull();
+      assertThat(rule.name()).isNotNull();
+      assertThat(rule.htmlDescription()).isNotNull();
+      if (rule.debtRemediationFunction() == null) {
+        missingDebt.add(rule.key());
+      }
     }
+    // From SONARGROOV-36, 'org.codenarc.rule.generic.IllegalSubclassRule' does not have debt by purpose
+    assertThat(missingDebt).containsOnly("org.codenarc.rule.generic.IllegalSubclassRule.fixed");
+
+    Rule rule = repository.rule("org.codenarc.rule.braces.ElseBlockBracesRule");
+    assertThat(rule.params()).hasSize(1);
+    assertThat(rule.params().get(0).defaultValue()).isEqualToIgnoringCase("false");
+  }
 }
